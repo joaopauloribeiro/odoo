@@ -287,7 +287,7 @@ exports.PosModel = Backbone.Model.extend({
         loaded: function(self, pricelists){ self.pricelist = pricelists[0]; },
     },{
         model: 'res.currency',
-        fields: ['name','symbol','position','rounding','accuracy'],
+        fields: ['name','symbol','position','rounding'],
         ids:    function(self){ return [self.pricelist.currency_id[0]]; },
         loaded: function(self, currencies){
             self.currency = currencies[0];
@@ -325,7 +325,7 @@ exports.PosModel = Backbone.Model.extend({
         },
     },{
         model:  'account.bank.statement',
-        fields: ['account_id','currency','journal_id','state','name','user_id','pos_session_id'],
+        fields: ['account_id','currency_id','journal_id','state','name','user_id','pos_session_id'],
         domain: function(self){ return [['state', '=', 'open'],['pos_session_id', '=', self.pos_session.id]]; },
         loaded: function(self, cashregisters, tmp){
             self.cashregisters = cashregisters;
@@ -1325,13 +1325,13 @@ exports.Orderline = Backbone.Model.extend({
             return base_amount >= 0 ? ret : ret * -1;
         }
         if ((tax.amount_type === 'percent' && !tax.price_include) || (tax.amount_type === 'division' && tax.price_include)){
-            return (base_amount * tax.amount / 100) * quantity;
+            return base_amount * tax.amount / 100;
         }
         if (tax.amount_type === 'percent' && tax.price_include){
-            return (base_amount - (base_amount / (1 + tax.amount / 100))) * quantity;
+            return base_amount - (base_amount / (1 + tax.amount / 100));
         }
         if (tax.amount_type === 'division' && !tax.price_include) {
-            return (base_amount / (1 - tax.amount / 100) - base_amount) * quantity;
+            return base_amount / (1 - tax.amount / 100) - base_amount;
         }
         return false;
     },
@@ -1354,7 +1354,7 @@ exports.Orderline = Backbone.Model.extend({
                 list_taxes.concat(ret.taxes);
             }
             else {
-                var tax_amount = self._compute_all(tax, price_unit, quantity);
+                var tax_amount = self._compute_all(tax, base, quantity);
                 tax_amount = round_pr(tax_amount, currency_rounding);
 
                 if (tax_amount){
